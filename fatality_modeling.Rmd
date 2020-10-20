@@ -1,0 +1,109 @@
+---
+title: "Fatality_predictions"
+author: "Aidan O'Sullivan"
+date: "10/20/2020"
+output: html_document
+---
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(Amelia)
+library(randomForest)
+library(corrplot)
+library(leaps)
+library(caret)
+library(randomForest)
+library(gbm)
+library(xgboost)
+library(data.table)
+library(mlr)
+library(parallel)
+library(parallelMap) 
+library(mice)
+```
+
+
+##We are finally ready to start making models!
+
+```{r}
+full_train <- read_csv("PoliceTrainNewCleaned.csv", col_names = TRUE)
+
+#coerce all the necessary columns to factors
+
+character_col2 <- c("city", "state", "manner_of_death", "armed", "gender", "race", "threat_level", "flee", "SubjectArmed", "SubjectRace", "SubjectGender", "Numberofofficers", "NumberOfSubjects", "OfficerRace", "OfficerGender", "Fatal", "armed_group", "geographic", "body_camera", "signs_of_mental_illness")
+
+
+  
+full_train[,character_col2] <- lapply(full_train[,character_col2], as.factor)
+full_train[,character_col2] <- lapply(full_train[,character_col2], droplevels)
+```
+
+First, let's split the data
+```{r}
+set.seed(123454321)
+round(76367*0.7)
+train <-sample(1:76367,53457, replace = F)
+data_train <- full_train[train, ]
+data_test <- full_train[-train, ]
+
+```
+
+## Finding Good Predictors
+```{r}
+
+regfit_back <- regsubsets(Fatal ~ city + manner_of_death + age + gender + race + signs_of_mental_illness  + threat_level + flee + body_camera + SubjectArmed + SubjectRace + SubjectGender + SubjectAge + Numbershots + Numberofofficers + OfficerRace + OfficerGender + armed_group + registeredweapons + share_white, data = full_train, nvmax = 9, method = "backward", really.big = TRUE)
+reg_back_sum <- summary(regfit_back)
+which.min(reg_back_sum$cp)
+which.max(reg_back_sum$adjr2)
+which.min(reg_back_sum$bic)
+coef(regfit_back, 9)
+?regsubset
+levels(full_train$Fatal)
+
+
+
+# get rid of state or city, NumberOfSubjects, city_population, city_gundealers, and pretty much all of the demographic data ??, 
+class(full_train$gender)
+sapply(full_train, class)
+
+```
+
+```{r}
+#regfit_exhaustive <- regsubsets(Fatal ~. - city - state - NumberOfSubjects - armed, data = full_train, nvmax = 9, method = "exhaustive", really.big = TRUE)
+
+
+regfit_exhaustive <- regsubsets(Fatal ~ city + manner_of_death + age + gender + race + signs_of_mental_illness  + threat_level + flee + body_camera + SubjectArmed + SubjectRace + SubjectGender + SubjectAge + Numbershots + Numberofofficers + OfficerRace + OfficerGender + armed_group + registeredweapons + share_white, data = full_train, nvmax = 9, method = "exhaustive", really.big = TRUE)
+reg_exhau_sum <- summary(regfit_back)
+which.min(reg_exhau_sum$cp)
+which.max(reg_exhau_sum$adjr2)
+which.min(reg_exhau_sum$bic)
+coef(regfit_exhaustive, 9)
+
+
+
+```
+
+## Random Forest Model
+```{r}
+bag.fatal <- randomForest(factor(Fatal) ~ OfficerGender + OfficerRace + SubjectRace + Numbershots + Numberofofficers + SubjectGender + SubjectArmed + state + registeredweapons + city_gundealers + SubjectAge, data = data_train, importance=TRUE, mtry = 6)
+yhat.bag_fatal <- predict(bag.fatal,data_test)
+Fatal_test <- data_test$Fatal
+table(Fatal_test,yhat.bag_fatal)
+mean(Fatal_test != yhat.bag_fatal)
+varImpPlot(bag.fatal)
+
+```
+
+### Finding Optimal 'mtry'
+```{r}
+rate <- vector()
+rate
+for(i in 1:10) {
+  bag.fatal <- randomForest(factor(Fatal) ~ OfficerGender + SubjectAge + OfficerRace + SubjectRace + Numbershots + Numberofofficers + SubjectGender + SubjectArmed + city_population + registeredweapons + state, data = data_train, importance=TRUE, mtry = i, ntree = 1000)
+  rate[i] <- mean(bag.fatal$err.rate)
+  print(bag.fatal)
+}
+rate
+plot(rate)
+which.min(rate)
+```
