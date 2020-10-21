@@ -2,10 +2,12 @@
 
 ## Background
 
+
+
 ## Goal
 
-## Phase 1  ###*In Group*
+## Phase 1  -*In Group*-
 
-## Phase 2  ###*Solo*
+## Phase 2  -*Solo*-
 
 ## Conclusion
