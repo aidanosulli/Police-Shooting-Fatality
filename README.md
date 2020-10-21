@@ -6,7 +6,7 @@
 
 ## Goal
 
-## Phase 1  -*In Group*-
+## Phase 1  -*Group Project*-
 
 ## Phase 2  -*Solo*-
 
