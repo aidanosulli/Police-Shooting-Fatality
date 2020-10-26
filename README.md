@@ -2,7 +2,7 @@
 
 ## Background
 
-This project began as a group assignment as part of a data science competition in UCLA Statistics 101C, Intro to Statistical Models and Data Mining. Professor Akram Almohalwas assigned three original datasets to use, with about 30% missing data overall, but allowed teams to use outside data as well. The assignment was to predict victim Fatality from any of the 70+ variables, using whatever models we could use to extract information from the categorical and numeric variables. 
+This project began as a group assignment as part of a data science competition in UCLA Statistics 101C, Intro to Statistical Models and Data Mining. Professor Akram Almohalwas assigned three original datasets to use, with about 30% missing data overall, but allowed teams to use outside data as well. The assignment was to predict victim Fatality from any of the 30+ variables, using whatever models we could use to extract information from the categorical and numeric variables. 
 
 However, after a poor competition performance (though I still got an A in the class, woohoo), this project became a personal vendetta for me to settle. I simply couldn't sit still knowing that other teams had achieved a higher classification acurracy than my group, when I knew that my group had busted its butt for the classification score we did get (officially, our score was 84% classification accuracy)
 
@@ -23,7 +23,7 @@ Working with three other Stats majors at UCLA, this first phase of the project w
 #### Step 2: Clean Data
    Since the data was originally scraped from handwritten PDF's, nearly every column needed tinkering - changing character columns to categorical/numeric,          combining categorical columns with too many factor levels, using Regex to delete unnecessary character values, etc. This was by far the hardest step, but        fortunately, not a single obersvation had to be dropped. 
 #### Step 3: Impute Data
-   We imputed around 35,000 missing values total (recall there were initially 76,000 observations across 70+ variables) using R's Amelia Package, which uses a      neural network to predict both numeric and categorical values that keep as much variance as possible in the data. 
+   We imputed around 35,000 missing values total (recall there were initially 76,000 observations across 34 variables) using R's Amelia Package, which uses a      neural network to predict both numeric and categorical values that keep as much variance as possible in the data. 
 #### Step 4: Add new Data
 #### Step 5: Modelling
 #### Step 6: Present Findings/Results of all previous steps in front of class
