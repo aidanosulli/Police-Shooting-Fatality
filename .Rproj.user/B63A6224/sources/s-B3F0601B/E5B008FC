@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1603227575300.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "E5B008FC",
+    "lastKnownWriteTime" : 1603228910,
+    "last_content_update" : 1603228910608,
+    "path" : "~/Police Shooting Fatality/fatality_modeling.Rmd",
+    "project_path" : "fatality_modeling.Rmd",
+    "properties" : {
+        "cursorPosition" : "10,21",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

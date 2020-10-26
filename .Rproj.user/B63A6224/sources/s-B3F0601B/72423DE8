@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1603228406620.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "72423DE8",
+    "lastKnownWriteTime" : 1603228844,
+    "last_content_update" : 1603228844345,
+    "path" : "~/Police Shooting Fatality/Cleaning_Data/Cleaning_Script_Aidan.R",
+    "project_path" : "Cleaning_Data/Cleaning_Script_Aidan.R",
+    "properties" : {
+        "cursorPosition" : "197,14",
+        "scrollLine" : "190"
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

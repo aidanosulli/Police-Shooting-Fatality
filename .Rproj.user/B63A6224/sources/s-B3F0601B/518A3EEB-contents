@@ -1,0 +1,545 @@
+---
+title: "101CProject"
+author: "Aidan O'Sullivan"
+date: "7/20/2020"
+output: html_document
+---
+
+```{r}
+library(boot)
+library(class)
+library(leaps)
+library(caret)
+library(e1071)
+library(gbm)
+library(randomForest)
+library(xgboost)
+library(boot)
+library(tidyverse)
+```
+
+```{r}
+Full_train <- read.csv("PoliceTrainNewCleaned.csv")
+
+
+
+full_train <- subset(Full_train, select = -c(Ob, city, SubjectArmed, SubjectAge, NumberOfSubjects, state))
+
+regfwd = regsubsets(Fatal ~ ., data = full_train, method = 'backward', nvmax = 20)
+summary(regfwd)$bic
+coef(regfwd, 10)
+
+full_train$Fatal <- ifelse(full_train$Fatal == "N", 0, 1)
+full_train$Fatal <- as.factor(full_train$Fatal)
+
+class(full_train$Fatal)
+levels(full_train$Fatal)
+
+
+View(Full_train)
+```
+
+Regsubset using 10-fold CV
+
+```{r}
+k=10
+set.seed(2628)
+Full_train_na <- na.omit(Full_train)
+Full_train_na <- subset(Full_train_na, select = -c(NumberOfSubjects))
+
+folds=sample(1:k,nrow(na.omit(Full_train)),replace=TRUE)
+cv.errors.mat=matrix(NA,k,15, dimnames=list(NULL, paste(1:15)))
+
+for(j in 1:k){
+ best.fit=regsubsets(Fatal~.,data=Full_train_na[folds!=j,],nvmax=15, method = "backward")
+ for(i in 1:15){
+ pred=predict(best.fit, Full_train_na[folds==j,],id=i)
+ cv.errors.mat[j,i]=mean((Full_train_na$Fatal[folds==j]-pred)^2)
+ }
+}
+
+mean.cv.errors=apply(cv.errors.mat,2,mean)
+
+#sum(apply(Full_train_na,2,is.na))
+ncol(Full_train_na)
+
+mean.cv.errors
+
+
+
+colnames(full_train)[colSums(is.na(full_train))>0]
+length(which(full_train$SubjectAge == "U"))
+
+```
+
+```{r}
+regfit_back <- regsubsets(Fatal ~., data = full_train, nvmax = 30, method = "backward")
+reg_back_sum <- summary(regfit_back)
+which.min(reg_back_sum$cp)
+```
+
+```{r}
+#scale data
+Y <- scale(full_train[,"age"]) 
+X <- cbind(scale(full_train[,"age"]), scale(full_train[,"Numbershots"]), scale(full_train[,"Numberofofficers"]))
+full_train_scaled <-cbind(subset(full_train, select = -c(age, Numbershots, Numberofofficers, Fatal)), X, full_train$Fatal)
+full_train_scaled <- na.omit(full_train_scaled)
+colnames(full_train_scaled)[13] <- "age"
+colnames(full_train_scaled)[14] <- "Numbershots"
+colnames(full_train_scaled)[15] <- "Numberofofficers"
+colnames(full_train_scaled)[16] <- "Fatal"
+#convert back to data frame
+full_train_scaled <- as.data.frame(full_train_scaled)
+#split into testing and training
+i <- 1:dim(full_train_scaled)[1]
+
+i_train <- sample(i, 53457, replace = F)
+
+train_scaled <- full_train_scaled[i_train,]
+test_scaled <- full_train_scaled[-i_train,]
+
+
+View(full_train_scaled)
+
+#check if there are any NA's
+sum(apply(full_train_scaled, 2, is.na))
+
+
+#try one KNN classification
+
+knn.pred_5 <- knn(train = train_scaled[,1:15], test = test_scaled[,1:15], cl = train_scaled$Fatal, k = 5)
+1-mean(knn.pred_5 == Auto_test$mpg01)
+
+#do automatic KNN classification
+full_train <- na.omit(full_train)
+trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
+Auto_knn_fit <- train(Fatal ~ ., data = full_train_scaled, method = "knn",
+                 trControl=trctrl,
+                 preProcess = c("center", "scale"),
+                 tuneLength = 10)
+Auto_knn_fit
+levels(Full_train$city)
+```
+
+```{r}
+Full_train$city <- as.factor(Full_train$city)
+levels(Full_train$city)
+
+
+Full_train["city_population"] <- NA
+
+
+
+
+Full_train[Full_train$city == "Albuquerque", "city_population"] <- 560513
+Full_train[Full_train$city == "Atlanta", "city_population"] <- 498044
+Full_train[Full_train$city == "Austin", "city_population"] <- 964254
+Full_train[Full_train$city == "Boston", "city_population"] <- 694583
+Full_train[Full_train$city == "Chicago", "city_population"] <- 2706000
+Full_train[Full_train$city == "Cincinnati", "city_population"] <- 302605
+Full_train[Full_train$city == "Cleveland", "city_population"] <- 383793
+Full_train[Full_train$city == "Columbus", "city_population"] <- 892533
+Full_train[Full_train$city == "Dallas", "city_population"] <- 1345000
+Full_train[Full_train$city == "Denver", "city_population"] <- 727211
+Full_train[Full_train$city == "El Paso", "city_population"] <- 682669
+Full_train[Full_train$city == "Fort Worth", "city_population"] <- 895008
+Full_train[Full_train$city == "Honolulu", "city_population"] <- 337256
+Full_train[Full_train$city == "Houston", "city_population"] <- 2326000
+Full_train[Full_train$city == "Indianapolis", "city_population"] <- 876862
+Full_train[Full_train$city == "Jacksonville", "city_population"] <- 903889
+Full_train[Full_train$city == "Kansas City", "city_population"] <- 491918
+Full_train[Full_train$city == "Louisville", "city_population"] <- 617638
+Full_train[Full_train$city == "Memphis", "city_population"] <- 650618
+Full_train[Full_train$city == "Milwaukee", "city_population"] <- 592025
+Full_train[Full_train$city == "Nashville", "city_population"] <- 692587
+Full_train[Full_train$city == "New York", "city_population"] <- 8336817
+Full_train[Full_train$city == "Newark", "city_population"] <- 282090
+Full_train[Full_train$city == "Philadelphia", "city_population"] <- 1584064
+Full_train[Full_train$city == "Phoenix", "city_population"] <- 1680992
+Full_train[Full_train$city == "Portland", "city_population"] <- 653115
+Full_train[Full_train$city == "San Antonio", "city_population"] <- 2269000
+Full_train[Full_train$city == "San Francisco", "city_population"] <- 883305
+Full_train[Full_train$city == "Seattle", "city_population"] <- 744955
+Full_train[Full_train$city == "St. Louis", "city_population"] <- 300576
+Full_train[Full_train$city == "Tampa", "city_population"] <- 392890
+Full_train[Full_train$city == "Tucson", "city_population"] <- 545975
+
+
+
+```
+
+```{r}
+full_train_final <- read.csv("full_train_final.csv")
+
+
+full_test_final <- read.csv("full_test_final.csv")
+
+dim(Full_train)
+dim(full_train_final)
+dim(full_test_final)
+```
+
+```{r}
+
+library(randomForest)
+
+set.seed(123454321)
+round(76367*0.7)
+train <-sample(1:76367,53457,replace=F)
+data_train <- full_train_final[train, ]
+data_test <- full_train_final[-train, ]
+
+
+bag.fatal <- randomForest(factor(Fatal) ~ OfficerGender + OfficerRace + SubjectRace + Numbershots + Numberofofficers + flee + state + threat_level, data = data_train, importance=TRUE)
+
+yhat.bag_fatal <- predict(bag.fatal,data_test)
+Fatal_test <- data_test$Fatal
+table(Fatal_test,yhat.bag_fatal)
+mean(Fatal_test != yhat.bag_fatal)
+
+dim(Fatal_test)
+dim(yhat.bag_fatal)
+
+# tree2 <- tree(weight ~ ., data = births_train)
+# summary(tree2)
+# weight_test <- births_test$weight
+# yhat=predict(tree2,newdata=births_test)
+# mean((yhat-weight_test)^2)
+
+```
+
+
+#Day 5
+
+```{r}
+full_train <-read.csv("/Users/aidanosullivan/Desktop/Regression/101C/Final Project/PoliceTrainNewCleaned.csv")
+
+full_test <-read.csv("/Users/aidanosullivan/Desktop/Regression/101C/Final Project/PoliceTestNoYNewCleaned.csv")
+
+colnames(full_train)
+
+char_cols_train <- c("city", "manner_of_death", "armed", "gender", "race", "state", "signs_of_mental_illness", "threat_level", "flee", "body_camera", "SubjectArmed", "SubjectRace", "SubjectAge", "OfficerRace", "OfficerGender", "Fatal", "armed_group", "geographic")
+
+char_cols_test <- c("city", "manner_of_death", "armed", "gender", "race", "state", "signs_of_mental_illness", "threat_level", "flee", "body_camera", "SubjectArmed", "SubjectRace", "SubjectAge", "OfficerRace", "OfficerGender", "armed_group", "geographic")
+
+length(levels(full_train$SubjectAge))
+
+
+
+full_train[,char_cols_train] <- lapply(full_train[,char_cols_train], as.factor)
+full_test[,char_cols_test] <- lapply(full_test[,char_cols_test], as.factor)
+
+full_train["city_gundealers"] <- NA
+
+full_train[full_train$city == "Albuquerque", "city_gundealers"] <- 165
+full_train[full_train$city == "Atlanta", "city_gundealers"] <- 294
+full_train[full_train$city == "Austin", "city_gundealers"] <- 239
+full_train[full_train$city == "Boston", "city_gundealers"] <- 145
+full_train[full_train$city == "Chicago", "city_gundealers"] <- 101
+full_train[full_train$city == "Cincinnati", "city_gundealers"] <- 307
+full_train[full_train$city == "Cleveland", "city_gundealers"] <- 241
+full_train[full_train$city == "Columbus", "city_gundealers"] <- 206
+full_train[full_train$city == "Dallas", "city_gundealers"] <- 646
+full_train[full_train$city == "Denver", "city_gundealers"] <- 501
+full_train[full_train$city == "El Paso", "city_gundealers"] <- 92
+full_train[full_train$city == "Fort Worth", "city_gundealers"] <- 596
+full_train[full_train$city == "Honolulu", "city_gundealers"] <- 32
+full_train[full_train$city == "Houston", "city_gundealers"] <- 686
+full_train[full_train$city == "Indianapolis", "city_gundealers"] <- 188
+full_train[full_train$city == "Jacksonville", "city_gundealers"] <- 170
+full_train[full_train$city == "Kansas City", "city_gundealers"] <- 341
+full_train[full_train$city == "Louisville", "city_gundealers"] <- 206
+full_train[full_train$city == "Memphis", "city_gundealers"] <- 121
+full_train[full_train$city == "Milwaukee", "city_gundealers"] <- 162
+full_train[full_train$city == "Nashville", "city_gundealers"] <- 175
+full_train[full_train$city == "New York", "city_gundealers"] <- 159
+full_train[full_train$city == "Newark", "city_gundealers"] <- 158
+full_train[full_train$city == "Philadelphia", "city_gundealers"] <- 230
+full_train[full_train$city == "Phoenix", "city_gundealers"] <- 640
+full_train[full_train$city == "Portland", "city_gundealers"] <- 330
+full_train[full_train$city == "San Antonio", "city_gundealers"] <- 241
+full_train[full_train$city == "San Francisco", "city_gundealers"] <- 63
+full_train[full_train$city == "Seattle", "city_gundealers"] <- 199
+full_train[full_train$city == "St. Louis", "city_gundealers"] <- 362
+full_train[full_train$city == "Tampa", "city_gundealers"] <- 357
+full_train[full_train$city == "Tucson", "city_gundealers"] <- 184
+
+
+full_test["city_gundealers"] <- NA
+
+full_test[full_test$city == "Albuquerque", "city_gundealers"] <- 165
+full_test[full_test$city == "Atlanta", "city_gundealers"] <- 294
+full_test[full_test$city == "Austin", "city_gundealers"] <- 239
+full_test[full_test$city == "Boston", "city_gundealers"] <- 145
+full_test[full_test$city == "Chicago", "city_gundealers"] <- 101
+full_test[full_test$city == "Cincinnati", "city_gundealers"] <- 307
+full_test[full_test$city == "Cleveland", "city_gundealers"] <- 241
+full_test[full_test$city == "Columbus", "city_gundealers"] <- 206
+full_test[full_test$city == "Dallas", "city_gundealers"] <- 646
+full_test[full_test$city == "Denver", "city_gundealers"] <- 501
+full_test[full_test$city == "El Paso", "city_gundealers"] <- 92
+full_test[full_test$city == "Fort Worth", "city_gundealers"] <- 596
+full_test[full_test$city == "Honolulu", "city_gundealers"] <- 32
+full_test[full_test$city == "Houston", "city_gundealers"] <- 686
+full_test[full_test$city == "Indianapolis", "city_gundealers"] <- 188
+full_test[full_test$city == "Jacksonville", "city_gundealers"] <- 170
+full_test[full_test$city == "Kansas City", "city_gundealers"] <- 341
+full_test[full_test$city == "Louisville", "city_gundealers"] <- 206
+full_test[full_test$city == "Memphis", "city_gundealers"] <- 121
+full_test[full_test$city == "Milwaukee", "city_gundealers"] <- 162
+full_test[full_test$city == "Nashville", "city_gundealers"] <- 175
+full_test[full_test$city == "New York", "city_gundealers"] <- 159
+full_test[full_test$city == "Newark", "city_gundealers"] <- 158
+full_test[full_test$city == "Philadelphia", "city_gundealers"] <- 230
+full_test[full_test$city == "Phoenix", "city_gundealers"] <- 640
+full_test[full_test$city == "Portland", "city_gundealers"] <- 330
+full_test[full_test$city == "San Antonio", "city_gundealers"] <- 241
+full_test[full_test$city == "San Francisco", "city_gundealers"] <- 63
+full_test[full_test$city == "Seattle", "city_gundealers"] <- 199
+full_test[full_test$city == "St. Louis", "city_gundealers"] <- 362
+full_test[full_test$city == "Tampa", "city_gundealers"] <- 357
+full_test[full_test$city == "Tucson", "city_gundealers"] <- 184
+
+
+full_train$Numbershots <- as.factor(ifelse(full_train$Numbershots > 10, 'High', 'Low'))
+full_test$Numbershots <- as.factor(ifelse(full_test$Numbershots > 10, 'High', 'Low'))
+
+full_train$SubjectGender <- as.factor(full_train$SubjectGender)
+full_test$SubjectGender <- as.factor(full_test$SubjectGender)
+
+
+set.seed(2)
+i <- dim(full_train)[1]
+76367 * 0.8
+train <- sample(i, 61095, replace = F)
+data_train <- full_train[train,]
+data_test <- full_train[-train,]
+
+
+
+# data_train$SubjectGender <- as.factor(data_train$SubjectGender)
+# data_test$SubjectGender <- as.factor(data_test$SubjectGender)
+
+
+```
+
+```{r}
+bag.fatal <- randomForest(factor(Fatal) ~ OfficerRace + SubjectRace + Numbershots + Numberofofficers + SubjectArmed + city_population, data = data_train, importance=TRUE)
+
+yhat.bag_fatal <- predict(bag.fatal, data_test)
+Fatal_test <- data_test$Fatal
+
+table(Fatal_test,yhat.bag_fatal)
+mean(Fatal_test != yhat.bag_fatal)
+varImpPlot(bag.fatal)
+colnames(data_train)
+```
+```{r}
+bag.fatal2 <- randomForest(factor(Fatal) ~ Numberofofficers + SubjectRace + Numbershots + OfficerRace + armed_group, data = data_train, importance=TRUE)
+
+yhat.bag_fatal2 <- predict(bag.fatal2, data_test)
+Fatal_test2 <- data_test$Fatal
+
+table(Fatal_test2,yhat.bag_fatal2)
+mean(Fatal_test2 != yhat.bag_fatal2)
+varImpPlot(bag.fatal2)
+```
+
+
+
+
+Let's give boosting a try
+
+First, GBM package
+```{r}
+
+set.seed(1)
+
+data_train$SubjectGender <- as.factor(data_train$SubjectGender)
+data_test$SubjectGender <- as.factor(data_test$SubjectGender)
+
+data_train$Fatal <- ifelse(data_train$Fatal == 'N', 0, 1 )
+data_test$Fatal <- ifelse(data_test$Fatal == 'N', 0, 1 )
+
+gbm_police <- gbm(Fatal ~ OfficerGender + OfficerRace + SubjectRace + Numbershots + Numberofofficers + SubjectGender + SubjectArmed + city_population + geographic + registeredweapons, data = data_train, distribution = "bernoulli", n.trees = 5000, interaction.depth = 4)
+
+summary(gbm_police) 
+
+
+train_pred <- predict(gbm_police)
+mean(train_pred != data_train$Fatal)
+
+test_pred <- predict(gbm_police, data_test)
+mean(test_pred != data_test$Fatal)
+table(Fatal_test, test_pred)
+
+
+
+```
+
+
+```{r}
+#library(gbm)
+boost.boston <- gbm(Fatal ~  OfficerGender + OfficerRace + SubjectRace + Numbershots + Numberofofficers + SubjectGender + SubjectArmed + city_population + registeredweapons + median_income + poverty_rate + percent_completed_hs, data=data_train, distribution="bernoulli", n.trees=2000, interaction.depth=4, shrinkage=0.8, verbose=F)
+yhat.boost <- predict(boost.boston, newdata= data_test,n.trees=2000, type = "response")
+predicted <- yhat.boost > .5
+predicted <- ifelse(predicted == FALSE, 0,1)
+predicted <- ifelse(predicted == 0, "N","F")
+table(predicted, data_test$Fatal)
+mean(predicted != data_test$Fatal)
+
+tab <- table(predicted, data_test$Fatal)
+accuracy <- 1 - (tab[1,1] + tab[2,2])/sum(tab)
+accuracy
+
+```
+
+```{r}
+data_train$Fatal <- ifelse(data_train$Fatal == 'N', 0, 1 )
+data_test$Fatal <- ifelse(data_test$Fatal == 'N', 0, 1 )
+```
+
+```{r}
+gbm_best <- gbm(Fatal ~ SubjectArmed + SubjectRace + Numbershots + Numberofofficers + OfficerRace + geographic + share_black + poverty_rate + percent_completed_hs, data=data_train, distribution="bernoulli", n.trees=500, interaction.depth=9, shrinkage=0.45, verbose=F)
+
+# k=10
+# set.seed(2628)
+# folds=sample(1:k,nrow(full_train),replace=TRUE)
+# cv.errors.mat=matrix(NA,k,12, dimnames=list(NULL, paste(1:12)))
+# for(j in 1:k){
+#  best.fit=regsubsets(price~.,data=houses[folds!=j,],nvmax=12)
+#  for(i in 1:12){
+#  pred=predict(best.fit,houses[folds==j,],id=i)
+#  cv.errors.mat[j,i]=mean((houses$price[folds==j]-pred)^2)
+#  }
+# }
+
+
+
+yhat.boost <- predict(gbm_best, newdata= data_test,n.trees=200, type = "response")
+predicted <- yhat.boost > .5
+predicted <- ifelse(predicted == FALSE, 0,1)
+predicted <- ifelse(predicted == 0, "N","F")
+table(predicted, data_test$Fatal)
+mean(predicted != data_test$Fatal)
+
+tab <- table(predicted, data_test$Fatal)
+accuracy <- 1 - (tab[1,1] + tab[2,2])/sum(tab)
+accuracy
+
+```
+
+```{r}
+
+
+full_train %>% ggplot(aes(x=Fatal)) + geom_bar(color = c("#993333", "Blue"), fill = c("#993333", "Blue")) + ggtitle("Categorical Imbalance for Label: Fatal") + ylab("Observations") + theme(plot.title = element_text(color = "#993333", size = 20, face = "bold.italic"), axis.title.x = element_text(size = 14, face = "bold"), axis.title.y = element_text(size = 14, face = "bold"))
+
+
+```
+
+```{r}
+library(scales)
+
+                                                
+full_train %>% ggplot(aes(x = reorder(SubjectRace, SubjectRace, length))) + 
+  geom_bar(aes(y = (..count..)/sum(..count..)),  fill = c("#CC33CC", "#CC00CC", "#CC66CC", "#9966CC", "#6600CC")) + scale_y_continuous(labels = percent) + 
+  xlab("Subject Race") + 
+  ylab("Percentage of Training Observations") +
+  theme(plot.title = element_text(color = "#6633CC", size = 15, face = "bold.italic"), axis.title.x = element_text(size = 10, face = "bold"), axis.title.y = element_text(size = 10, face = "bold")) +
+  ggtitle("Subject Race by Percentage in Training Data")
+
+
+
+# full_train %>% ggplot(aes(x="", y=Ob, fill=SubjectRace)) +
+#   geom_bar(stat="identity", width=1) +
+#   coord_polar("y", start=0)
+```
+
+
+```{r}
+
+
+full_train %>% ggplot(aes(x = reorder(OfficerRace, OfficerRace, length))) + 
+  geom_bar(aes(y = (..count..)/sum(..count..)),  fill = "green") + scale_y_continuous(labels = percent) + 
+  xlab("Officer Race") + 
+  ylab("Percentage of Training Observations") +
+  theme(plot.title = element_text(color = "#6633CC", size = 15, face = "bold.italic"), axis.title.x = element_text(size = 10, face = "bold"), axis.title.y = element_text(size = 10, face = "bold"))
+
+```
+
+
+
+Then xgboost package
+```{r}
+
+
+?train
+bst <- xgboost(data = d)
+
+
+
+model <- train(factor(Fatal) ~ OfficerGender + OfficerRace + SubjectRace + Numbershots + Numberofofficers + SubjectGender + SubjectArmed + city_population + geographic + registeredweapons, data = data_train, method = "xgbTree", trControl = trainControl("cv", number = 10))
+
+summary(model) 
+varImp(model)
+
+train_pred <- predict(model)
+mean(train_pred != data_train$Fatal)
+
+test_pred <- predict(model, data_test)
+mean(test_pred != data_test$Fatal)
+table(Fatal_test, test_pred)
+colnames(data_train)
+```
+
+```{r}
+library(leaps)
+regfit_back <- regsubsets(Fatal ~. - Ob - city - state - SubjectAge - NumberOfSubjects, data = full_train, nvmax = 9, method = "backward", really.big = TRUE)
+reg_back_sum <- summary(regfit_back)
+which.min(reg_back_sum$cp)
+which.max(reg_back_sum$adjr2)
+which.min(reg_back_sum$bic)
+coef(regfit_back, 9)
+```
+
+
+```{r}
+regfit_exhaustive <- regsubsets(Fatal ~. - Ob - city - state - SubjectAge - NumberOfSubjects, data = full_train, nvmax = 9, method = "exhaustive", really.big = TRUE)
+reg_exhau_sum <- summary(regfit_back)
+which.min(reg_exhau_sum$cp)
+which.max(reg_exhau_sum$adjr2)
+which.min(reg_exhau_sum$bic)
+coef(regfit_exhaustive, 9)
+```
+
+
+```{r}
+# data_train$geographic <- ifelse(data_train$geographic == 'Southeast', 1, 0)
+# data_test$geographic <- ifelse(data_test$geographic == 'Southeast', 1, 0)
+# 
+# data_train$SubjectRace <- ifelse(data_train$SubjectRace == 'W', 1, 0)
+# data_test$SubjectRace <- ifelse(data_test$SubjectRace == 'W', 1, 0)
+# 
+# data_train$OfficerRace <- ifelse(data_train$OfficerRace == 'W', 1, 0)
+# data_test$OfficerRace <- ifelse(data_test$OfficerRace == 'W', 1, 0)
+
+bag.fatal3 <- randomForest(factor(Fatal) ~  SubjectArmed + SubjectRace + Numbershots + Numberofofficers + OfficerRace + geographic + share_black + poverty_rate + percent_completed_hs, data = data_train, importance=TRUE)
+
+yhat.bag_fatal3 <- predict(bag.fatal3, data_test)
+Fatal_test3 <- data_test$Fatal
+
+table(Fatal_test3,yhat.bag_fatal3)
+mean(Fatal_test3 != yhat.bag_fatal3)
+varImpPlot(bag.fatal3)
+```
+
+
+Feature Selection
+```{r}
+library(mlbench)
+library(caret)
+colnames(full_train)
+corr_matrix <- cor(full_train[,c("gender", "race", "signs_of_mental_illness", "threat_level", "flee", "body_camera", "NumberOfSubjects", "SubjectArmed", "SubjectRace", "SubjectGender", "SubjectAge", "Numbershots", "Numberofofficers", "OfficerRace", "OfficerGender", "armed_group", "city_population", "geographic", "registeredweapons", "share_white", "share_black", "share_native_american", "share_asian", "share_hispanic", "median_income", "poverty_rate", "percent_completed_hs")])
+```
+
+
