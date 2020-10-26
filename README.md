@@ -28,10 +28,11 @@ Working with three other Stats majors at UCLA, this first phase of the project w
    We imputed around 35,000 missing values total (recall there were initially 76,000 observations across 34 variables) using R's Amelia Package, which uses a        neural network to predict both numeric and categorical values that keep as much variance as possible in the data. 
 #### Step 4: Add new Data
    In total, we added 5 extra features to our dataset, ranging from city population to prevelance of gun dealers.
-#### Step 5: Modelling
+#### Step 5: Modeling
    We applied several models. See graphic below: 
+   ![](Photos/modeling_trials.png)
 #### Step 6: Present Findings/Results of all previous steps in front of class
-   Finally, we presented our all the above steps and results to our class, emphasizing the extra data we scraped and the our parameter selections for our XGBoos    and Random Forest Models. 
+   Finally, we presented our all the above steps and results to our class, emphasizing the extra data we scraped and the our parameter selections for our XGBoost    and Random Forest Models. 
    
 ## Phase 2  -*Solo*-
 
