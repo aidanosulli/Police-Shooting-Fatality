@@ -23,12 +23,15 @@ Working with three other Stats majors at UCLA, this first phase of the project w
 #### Step 2: Clean Data
    Since the data was originally scraped from handwritten PDF's, nearly every column needed tinkering - changing character columns to categorical/numeric,          combining categorical columns with too many factor levels, using Regex to delete unnecessary character values, etc. This was by far the hardest step, but        fortunately, not a single obersvation had to be dropped. 
 #### Step 3: Impute Data
-   We imputed around 35,000 missing values total (recall there were initially 76,000 observations across 34 variables) using R's Amelia Package, which uses a      neural network to predict both numeric and categorical values that keep as much variance as possible in the data. 
+   We imputed around 35,000 missing values total (recall there were initially 76,000 observations across 34 variables) using R's Amelia Package, which uses a        neural network to predict both numeric and categorical values that keep as much variance as possible in the data. 
 #### Step 4: Add new Data
+   In total, we added 5 extra features to our dataset, ranging from city population to prevelance of gun dealers.
 #### Step 5: Modelling
+   We applied several models with the following being the better classification accuracies for each. 
 #### Step 6: Present Findings/Results of all previous steps in front of class
 
 ## Phase 2  -*Solo*-
+
 
 
 
