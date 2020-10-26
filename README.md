@@ -36,6 +36,7 @@ Working with three other Stats majors at UCLA, this first phase of the project w
    ![](Photos/modeling_trials.png)
 #### Step 7: Present Findings/Results of all previous steps in front of class
    Finally, we presented our all the above steps and results to our class, emphasizing the extra data we scraped and the our parameter selections for our XGBoost    and Random Forest Models. 
+   ![](Photos/fatality_confusion.png)
    
 ## Phase 2  -*Solo*-
 
@@ -49,6 +50,8 @@ Impute the missing values using Mice Package in R, which uses neural networks to
 
 ### Step 3: 
 Re-run all models, including re-choosing all parameters for tree/forest models; check results. 
+
+Final confusion matrix is unfortunatley unattainable due to access restrictions on the testing data. 
 
 
 ## Conclusion
