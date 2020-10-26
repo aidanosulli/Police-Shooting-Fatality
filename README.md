@@ -15,6 +15,8 @@ Predict victim fatality from 76,000 violent police encounters from 32 cities nat
 
 ## Phase 1  -*Group Project*-
 
+Code available in Group Project Folder 
+
 **Please Note** The group's distribution of was overall very even, and I believe all parties were left happy. I try to stress parts I did indepentelt, but overall, it was a wonderful team effort. I would be happy to speak about my contributions to any of the areas. 
 
 Working with three other Stats majors at UCLA, this first phase of the project was pivotal to the speed of my success in phase two. As the project was both a competition and a course requirement, my group and I completed several tasks, along with the overarching goal. Our step by step process was as follows: 
@@ -27,12 +29,13 @@ Working with three other Stats majors at UCLA, this first phase of the project w
 #### Step 4: Add new Data
    In total, we added 5 extra features to our dataset, ranging from city population to prevelance of gun dealers.
 #### Step 5: Modelling
-   We applied several models with the following being the better classification accuracies for each. 
+   We applied several models. See graphic below: 
 #### Step 6: Present Findings/Results of all previous steps in front of class
-
+   Finally, we presented our all the above steps and results to our class, emphasizing the extra data we scraped and the our parameter selections for our XGBoos    and Random Forest Models. 
+   
 ## Phase 2  -*Solo*-
 
-
+Given our relatively poor competition performance but the excess of our work, I knew that a major breakthrough in the data was near. As it turned out, I had to re-clean all the data, reusing some of the code but 
 
 
 ## Conclusion
