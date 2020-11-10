@@ -56,4 +56,4 @@ Final confusion matrix is unfortunatley unattainable due to access restrictions 
 
 ## Conclusion
 
-Thanks to re-cleaning the data and using a more powerful imputation package that perserved more of the variance than before, I was able to instantly raise our fatality classification accuracy above 91%, which would have taken top prize in the competition. Hey, better late than never. 
+Thanks to re-cleaning the data and using a more powerful imputation package that perserved more of the variance than before, I was able to instantly raise our fatality classification accuracy from 83% to over 91%, which would have taken top prize in the competition. Hey, better late than never. 
